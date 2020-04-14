@@ -2,16 +2,23 @@
 
 buildscript {
     ext {
-        // buildToolsVersion = "28.0.3"
-        // minSdkVersion = 16
-        // compileSdkVersion = 28
-        // targetSdkVersion = 28
-        compileSdkVersion = 26
-        targetSdkVersion = 26
+        subprojects {
+        afterEvaluate {
+            project ->
+                if (project.hasProperty("android")) {
+                    android {
+                        compileSdkVersion = 28
+                        buildToolsVersion = "28.0.3"
+                    }
+                }
+            }
+        }
         minSdkVersion = 16
-        buildToolsVersion = "26.0.2"
-        supportLibVersion = "26.1.0"
-        googlePlayServicesVersion = "11.8.0"
+        targetSdkVersion = 28
+        compileSdkVersion = 28
+        buildToolsVersion = "28.0.3"
+        supportLibVersion = "28.0.0"
+        googlePlayServicesVersion = "9.8.0"
     }
     repositories {
         google()

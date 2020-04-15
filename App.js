@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Component } from 'react';
+import React, { Component } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -10,31 +10,33 @@ import {
   StatusBar,
   AppState,
 } from 'react-native';
-import MapView, {
-  Polygon,
-} from 'react-native-maps'
+import _ from 'lodash';
 import GeoFencing from 'react-native-geo-fencing';
 import firestore from '@react-native-firebase/firestore';
 import BackgroundTimer from 'react-native-background-timer';
+import LocationSwitch from 'react-native-location-switch';
 import BackgroundGeolocation from '@mauron85/react-native-background-geolocation';
-import _ from 'lodash';
 
 const polygon = [
   {
-    latitude: 24.904858,
-    longitude: 67.043736,
+    latitude: 37.423583,
+    longitude: -122.085813,
   },
   {
-    latitude: 24.909013,
-    longitude: 67.046212,
+    latitude: 37.420797,
+    longitude: -122.085824,
   },
   {
-    latitude: 24.902332,
-    longitude: 67.042806,
+    latitude: 37.420678,
+    longitude: -122.081296,
   },
   {
-    latitude: 24.907743,
-    longitude: 67.039501,
+    latitude: 37.423345,
+    longitude: -122.081500,
+  },
+  {
+    latitude: 37.423583,
+    longitude: -122.085813,
   },
 ]
 
@@ -43,18 +45,37 @@ class App extends Component {
 
   state = {
     data: null,
-    coords: null,
+    coords: {},
     toggle: true,
+    status: "",
+    locationEnabled: false,
     appState: AppState.currentState
   }
 
+  // locationStatus = () => {
+  //   LocationSwitch.isLocationEnabled(
+  //     () => {
+  //       this.setState({ locationEnabled: true });
+  //     },
+  //     () => { },
+  //   );
+  // }
+
+  locationPermission = () => {
+    LocationSwitch.enableLocationService(1000, true,
+      () => { this.setState({ locationEnabled: true }); },
+      () => { this.setState({ locationEnabled: false }); },
+    );
+  }
+
   componentDidMount() {
+    // this.locationStatus();
+    this.locationPermission();
     this.backgroundJobs();
     this.database();
     BackgroundGeolocation.start();
     AppState.addEventListener("change", this._handleAppStateChange);
   }
-
 
   backgroundJobs = () => {
     BackgroundGeolocation.configure({
@@ -82,8 +103,10 @@ class App extends Component {
       // }
     });
 
-    BackgroundGeolocation.on('location', (location) => {
-      this.setState({ coords: location }, () => {
+    BackgroundGeolocation.on('location', async (location) => {
+      const a = await this._geoFancing(location);
+      this.setState({ coords: location, status: a }, async () => {
+        console.log('BackgroundGeolocation _geoFancing:', a);
         console.log('BackgroundGeolocation location:', location);
       })
       // BackgroundGeolocation.startTask(taskKey => {
@@ -120,6 +143,8 @@ class App extends Component {
           ]), 1000);
       }
     });
+
+    // These two functions only for android
 
     // BackgroundGeolocation.on('background', () => {
     //   hitApi();
@@ -196,7 +221,7 @@ class App extends Component {
               console.log('point is NOT within polygon');
             })
         }
-      }, 3000);
+      }, 60000);
       // 300000
     }
     if (nextAppState === 'active') {
@@ -216,8 +241,27 @@ class App extends Component {
     AppState.removeEventListener("change", this._handleAppStateChange);
   }
 
+  _geoFancing = async (coords) => {
+    const { latitude, longitude } = coords;
+    let a = "";
+    const p = polygon.map(v => {
+      return { lat: v.latitude, lng: v.longitude }
+    });
+    if (coords && latitude && longitude) {
+      try {
+        await GeoFencing.containsLocation({ lat: latitude, lng: longitude }, p);
+        a = "You're in circle";
+      }
+      catch (e) {
+        a = "you're not in circle";
+      }
+    }
+    return a;
+  }
+
   render() {
-    const { coords, toggle, data } = this.state
+    console.disableYellowBox = true;
+    const { status, data } = this.state
     return (
       <>
         <StatusBar barStyle="dark-content" />
@@ -235,12 +279,11 @@ class App extends Component {
                 />
               </MapView>
             </View> */}
-            <Text style={{ fontSize: 15, marginVertical: 20, textAlign: 'center', paddingHorizontal: 10, }}>
-              {JSON.stringify(coords)}
+            <Text style={styles.status}>
+              {status}
             </Text>
-
             <View style={styles.btnWrapper}>
-              <Button
+              {/* <Button
                 color={"teal"}
                 title={toggle ? "Stop" : "Start"}
                 onPress={() => {
@@ -252,7 +295,7 @@ class App extends Component {
                     BackgroundGeolocation.start()
                   }
                 }}
-              />
+              /> */}
               <Button
                 disabled={data === null}
                 title={"Clear Firebase"}
@@ -264,13 +307,7 @@ class App extends Component {
             {data && (
               <>
                 <Text style={{ fontSize: 15, marginTop: 30, textAlign: 'center', paddingHorizontal: 10, }}>
-                  Firebase
-                </Text>
-                <Text style={{ fontSize: 15, marginVertical: 10, textAlign: 'center', paddingHorizontal: 10, }}>
-                  {data.message}
-                </Text>
-                <Text style={{ fontSize: 15, marginBottom: 30, marginTop: 10, textAlign: 'center', paddingHorizontal: 10, }}>
-                  {JSON.stringify(data.coords)}
+                  Firebase has been called
                 </Text>
               </>
             )}
@@ -286,6 +323,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     alignItems: 'center',
     backgroundColor: "#fff",
+    justifyContent: 'center',
   },
   mapWrapper: {
     height: 400,
@@ -298,7 +336,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     width: '100%',
     justifyContent: 'space-evenly'
-  }
+  },
+  status: {
+    fontSize: 15,
+    marginBottom: 30,
+    textAlign: 'center',
+    paddingHorizontal: 10,
+  },
 });
 
 export default App;

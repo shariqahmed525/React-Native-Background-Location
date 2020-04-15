@@ -5401,6 +5401,10 @@ react-native-geo-fencing@^0.1.0:
   resolved "https://registry.yarnpkg.com/react-native-geo-fencing/-/react-native-geo-fencing-0.1.0.tgz#0a04c2cdff9ff6d0091fbea89690fda7310be550"
   integrity sha1-CgTCzf+f9tAJH76olpD9pzEL5VA=
 
+"react-native-location-switch@https://github.com/philiWeitz/react-native-location-switch":
+  version "0.1.0"
+  resolved "https://github.com/philiWeitz/react-native-location-switch#835f37bffac46b221c7a372069699b304fb4ccb4"
+
 react-native-maps@^0.27.1:
   version "0.27.1"
   resolved "https://registry.yarnpkg.com/react-native-maps/-/react-native-maps-0.27.1.tgz#2f10cd417bb2fd938c9e015b1c9b6d9b1a44b97f"
